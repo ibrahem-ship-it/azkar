@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>أذكار الصباح والمساء التفاعلية</title>
+    <style>
+        :root {
+            --primary: #2c7a7b;
+            --bg-color: #f7fafc;
+            --card-bg: #ffffff;
+            --text-main: #2d3748;
+            --text-muted: #718096;
+            --success: #38a169;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        header {
+            background-color: var(--primary);
+            color: white;
+            text-align: center;
+            padding: 1.5rem 1rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        header h1 { margin: 0 0 10px 0; font-size: 1.8rem; }
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        button {
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .btn-tab {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+        .btn-tab.active {
+            background-color: white;
+            color: var(--primary);
+        }
+        .btn-notify {
+            background-color: #ecc94b;
+            color: #744210;
+            margin-top: 15px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 0 15px;
+        }
+        .dhikr-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        .dhikr-card.completed {
+            opacity: 0.6;
+            border-color: var(--success);
+            background-color: #f0fff4;
+        }
+        .dhikr-text {
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+        .dhikr-action {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #edf2f7;
+            padding-top: 15px;
+        }
+        .counter-btn {
+            background-color: var(--primary);
+            color: white;
+            width: 100%;
+            padding: 12px;
+            font-size: 1.1rem;
+            border-radius: 8px;
+        }
+        .counter-btn:active { transform: scale(0.98); }
+        .completed .counter-btn {
+            background-color: var(--success);
+            cursor: default;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>أذكار الصباح والمساء</h1>
+        <div class="controls">
+            <button class="btn-tab active" id="btn-morning" onclick="loadAdhkar('morning')">أذكار الصباح</button>
+            <button class="btn-tab" id="btn-evening" onclick="loadAdhkar('evening')">أذكار المساء</button>
+        </div>
+        <button class="btn-notify" onclick="enableNotifications()">🔔 تفعيل إشعارات التذكير</button>
+    </header>
+
+    <div class="container" id="adhkar-container">
+        <!-- سيتم تحميل الأذكار هنا بواسطة جافاسكريبت -->
+    </div>
+
+    <script>
+        // قاعدة بيانات الأذكار
+        const adhkarData = [
+            {
+                text: "اللَّهُ لَا إِلَهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ... (آية الكرسي)",
+                count: 1,
+                time: "both"
+            },
+            {
+                text: "قُلْ هُوَ اللَّهُ أَحَدٌ * اللَّهُ الصَّمَدُ * لَمْ يَلِدْ وَلَمْ يُولَدْ * وَلَمْ يَكُنْ لَهُ كُفُوًا أَحَدٌ (والمعوذتين)",
+                count: 3,
+                time: "both"
+            },
+            {
+                text: "اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَهَ إِلاَّ أَنْتَ، خَلَقْتَنِي وَأَنَا عَبْدُكَ، وَأَنَا عَلَى عَهْدِكَ وَوَعْدِكَ مَا اسْتَطَعْتُ...",
+                count: 1,
+                time: "both"
+            },
+            {
+                text: "أَصْبَحْنَا وَأَصْبَحَ الْملْكُ لِلَّهِ، وَالْحَمْدُ لِلَّهِ، لاَ إِلَهَ إِلاَّ اللَّهُ وَحْدَهُ لاَ شَرِيكَ لَهُ...",
+                count: 1,
+                time: "morning"
+            },
+            {
+                text: "أَمْسَيْنَا وَأَمْسَى الْمُلْكُ لِلَّهِ، وَالْحَمْدُ لِلَّهِ، لاَ إِلَهَ إِلاَّ اللَّهُ وَحْدَهُ لاَ شَرِيكَ لَهُ...",
+                count: 1,
+                time: "evening"
+            },
+            {
+                text: "اللَّهُمَّ بِكَ أَصْبَحْنَا، وَبِكَ أَمْسَيْنَا، وَبِكَ نَحْيَا، وَبِكَ نَمُوتُ وَإِلَيْكَ النُّشُورُ",
+                count: 1,
+                time: "morning"
+            },
+            {
+                text: "اللَّهُمَّ بِكَ أَمْسَيْنَا، وَبِكَ أَصْبَحْنَا، وَبِكَ نَحْيَا، وَبِكَ نَمُوتُ وَإِلَيْكَ الْمَصِيرُ",
+                count: 1,
+                time: "evening"
+            },
+            {
+                text: "بِسْمِ اللَّهِ الَّذِي لاَ يَضُرُّ مَعَ اسْمِهِ شَيْءٌ فِي الْأرْضِ وَلاَ فِي السّمَاءِ وَهُوَ السَّمِيعُ الْعَلِيمُ",
+                count: 3,
+                time: "both"
+            },
+            {
+                text: "رَضِيتُ بِاللَّهِ رَبًّا، وَبِالْإِسْلَامِ دِينًا، وَبِمُحَمَّدٍ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ نَبِيًّا",
+                count: 3,
+                time: "both"
+            },
+            {
+                text: "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ",
+                count: 100,
+                time: "both"
+            }
+        ];
+
+        let currentActiveTime = 'morning';
+
+        function loadAdhkar(time) {
+            currentActiveTime = time;
+            
+            // تحديث شكل الأزرار
+            document.getElementById('btn-morning').classList.toggle('active', time === 'morning');
+            document.getElementById('btn-evening').classList.toggle('active', time === 'evening');
+
+            const container = document.getElementById('adhkar-container');
+            container.innerHTML = '';
+
+            // تصفية الأذكار حسب الوقت
+            const filteredAdhkar = adhkarData.filter(d => d.time === time || d.time === 'both');
+
+            filteredAdhkar.forEach((dhikr, index) => {
+                const card = document.createElement('div');
+                card.className = 'dhikr-card';
+                card.id = `card-${index}`;
+
+                card.innerHTML = `
+                    <div class="dhikr-text">${dhikr.text}</div>
+                    <div class="dhikr-action">
+                        <button class="counter-btn" id="btn-${index}" onclick="decrementCount(${index}, ${dhikr.count})">
+                            اضغط للعد (المتبقي: <span id="count-${index}">${dhikr.count}</span>)
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // دالة العداد التفاعلي
+        function decrementCount(index, maxCount) {
+            const countSpan = document.getElementById(`count-${index}`);
+            const btn = document.getElementById(`btn-${index}`);
+            const card = document.getElementById(`card-${index}`);
+            
+            let currentCount = parseInt(countSpan.innerText);
+            
+            if (currentCount > 0) {
+                currentCount--;
+                countSpan.innerText = currentCount;
+                
+                if (currentCount === 0) {
+                    btn.innerText = "✓ تم الانتهاء";
+                    card.classList.add('completed');
+                }
+            }
+        }
+
+        // ---- نظام الإشعارات (Notifications) ----
+        function enableNotifications() {
+            if (!("Notification" in window)) {
+                alert("متصفحك لا يدعم الإشعارات.");
+                return;
+            }
+            Notification.requestPermission().then(permission => {
+                if (permission === "granted") {
+                    alert("تم تفعيل الإشعارات بنجاح! سيصلك تذكير في الـ 6 صباحاً والـ 5 مساءً (بشرط إبقاء هذه الصفحة مفتوحة).");
+                    startNotificationChecker();
+                } else {
+                    alert("لقد قمت برفض الإشعارات.");
+                }
+            });
+        }
+
+        function startNotificationChecker() {
+            // فحص الوقت كل دقيقة
+            setInterval(() => {
+                const now = new Date();
+                const hours = now.getHours();
+                const minutes = now.getMinutes();
+
+                // إشعار الصباح: الساعة 6:00 صباحاً
+                if (hours === 6 && minutes === 0) {
+                    showNotification("أذكار الصباح", "حان الآن موعد أذكار الصباح، ابدأ يومك بذكر الله.");
+                }
+                
+                // إشعار المساء: الساعة 17:00 (5 مساءً)
+                if (hours === 17 && minutes === 0) {
+                    showNotification("أذكار المساء", "حان الآن موعد أذكار المساء، اختم يومك بذكر الله.");
+                }
+            }, 60000); // 60000 ملي ثانية = 1 دقيقة
+        }
+
+        function showNotification(title, body) {
+            if (Notification.permission === "granted") {
+                new Notification(title, {
+                    body: body,
+                    icon: "https://cdn-icons-png.flaticon.com/512/3389/3389081.png" // أيقونة إسلامية تعبيرية
+                });
+            }
+        }
+
+        // تحميل أذكار الصباح افتراضياً عند فتح الصفحة
+        window.onload = () => loadAdhkar('morning');
+    </script>
+</body>
+</html>
